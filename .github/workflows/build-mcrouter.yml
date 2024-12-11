@@ -1,0 +1,100 @@
+name: Build mcrouter
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - LICENSE
+      - README.md
+      - .github/dependabot.yml
+      - .github/workflows/shell-lint.yml
+  pull_request:
+    paths-ignore:
+      - LICENSE
+      - README.md
+      - .github/dependabot.yml
+      - .github/workflows/shell-lint.yml
+
+jobs:
+  build_mcrouter_debian_bookworm:
+    name: Build Debian Bookworm mcrouter package
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: infra
+      - name: Fetch mcrouter
+        run: ./infra/fetch.sh
+      - name: Build and test mcrouter
+        run: |
+          docker build -f ./infra/Dockerfile-debian --target builder -t buildenv .
+          docker run --rm --name buildenv -v $(pwd):/build -w /build buildenv ./infra/build-and-test.sh
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcrouter-debian-bookworm
+          path: fbcode-scratch/build/mcrouter/mcrouter.deb
+
+  push_mcrouter_debian_bookworm:
+    name: Push Debian Bookworm mcrouter image
+    needs: build_mcrouter_debian_bookworm
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download mcrouter package
+        uses: actions/download-artifact@v4
+        with:
+          name: mcrouter-debian-bookworm
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ github.token }}
+      - name: Populate docker metadata
+        id: docker-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/mszabo-wikia/mcrouter-debian-bookworm
+          tags:
+            type=sha,prefix={{date 'YYYYMMDD'}}-
+          labels: |
+            org.opencontainers.image.title=mcrouter
+            org.opencontainers.image.description=Debian Bookworm mcrouter image
+      - name: Build and push mcrouter image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile-debian
+          push: ${{ github.event_name == 'push' }}
+          target: base
+          tags: ${{ steps.docker-meta.outputs.tags }}
+          labels: ${{ steps.docker-meta.outputs.labels }}
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/mszabo-wikia/mcrouter-debian-bookworm
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: ${{ github.event_name == 'push' }}
+      - name: Generate image SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ghcr.io/mszabo-wikia/mcrouter-debian-bookworm:${{ steps.push.outputs.tag }}
+          output-file: sbom.json
+          upload-artifact: false
+      - name: Generate SBOM attestation
+        uses: actions/attest-sbom@v2
+        with:
+          subject-name: ghcr.io/mszabo-wikia/mcrouter-debian-bookworm
+          subject-digest: ${{ steps.push.outputs.digest }}
+          sbom-path: 'sbom.json'
+          push-to-registry: ${{ github.event_name == 'push' }}

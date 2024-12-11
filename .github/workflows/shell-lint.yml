@@ -1,0 +1,27 @@
+name: Lint shell files
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '*.sh'
+  pull_request:
+    paths:
+      - '*.sh'
+
+jobs:
+  lint:
+    name: shfmt and shellcheck
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install shfmt and shellcheck
+        run: |
+          sudo apt update
+          sudo apt install -y shfmt shellcheck
+      - name: Run shfmt
+        run: shfmt -d *.sh
+      - name: Run shellcheck
+        run: shellcheck -x *.sh

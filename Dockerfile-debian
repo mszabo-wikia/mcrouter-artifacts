@@ -1,0 +1,19 @@
+FROM debian:bookworm-20241202 AS builder
+RUN apt update && \
+    apt install gcc cmake git build-essential debhelper python3 ninja-build sudo -y
+
+FROM debian:bookworm-20241202 AS base
+
+ADD ./mcrouter.deb /mcrouter.deb
+RUN apt update && \
+    apt install -y ./mcrouter.deb && \
+    rm -f mcrouter.deb && \
+    apt clean && \
+    useradd --system --no-create-home --home /nonexistent \
+        --user-group --comment "mcrouter user" mcrouter && \
+    mkdir -p /var/spool/mcrouter && \
+    mkdir -p /var/lib/mcrouter && \
+    chown mcrouter:mcrouter /var/lib/mcrouter && \
+    chown mcrouter:mcrouter /var/spool/mcrouter && \
+    chmod 0750 /var/lib/mcrouter && \
+    chmod 0750 /var/spool/mcrouter
