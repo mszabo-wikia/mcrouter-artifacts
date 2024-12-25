@@ -1,8 +1,8 @@
-FROM debian:bookworm-20241202 AS builder
+FROM debian:bookworm-20241223 AS builder
 RUN apt update && \
     apt install gcc cmake git build-essential debhelper python3 ninja-build sudo -y
 
-FROM debian:bookworm-20241202 AS base
+FROM debian:bookworm-20241223 AS base
 
 ADD ./mcrouter.deb /mcrouter.deb
 RUN apt update && \
