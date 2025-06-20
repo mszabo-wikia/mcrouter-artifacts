@@ -16,12 +16,13 @@ chown -R mcrouter:mcrouter mcrouter fbcode-scratch
 cd mcrouter
 
 PACKAGE_VERSION="$(date +%Y%m%d)-$(sudo -u mcrouter git rev-parse --short HEAD)"
+SCRATCH_PATH="$PWD"/fbcode-scratch
 
 ./build/fbcode_builder/getdeps.py --allow-system-packages install-system-deps --recursive mcrouter
 
-sudo -u mcrouter ./build/fbcode_builder/getdeps.py --allow-system-packages --scratch-path ../fbcode-scratch build --src-dir=. mcrouter
+sudo -u mcrouter ./build/fbcode_builder/getdeps.py --allow-system-packages --scratch-path "$SCRATCH_PATH" build --src-dir=. --build-dir "$SCRATCH_PATH"/build/mcrouter mcrouter
 
-sudo -u mcrouter ./build/fbcode_builder/getdeps.py --allow-system-packages --scratch-path ../fbcode-scratch test --src-dir=. mcrouter
+sudo -u mcrouter ./build/fbcode_builder/getdeps.py --allow-system-packages --scratch-path "$SCRATCH_PATH" test --src-dir=. --build-dir "$SCRATCH_PATH"/build/mcrouter mcrouter
 
 cd ../fbcode-scratch/build/mcrouter
 
