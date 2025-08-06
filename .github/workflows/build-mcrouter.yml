@@ -50,7 +50,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Download mcrouter package
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: mcrouter-debian-bookworm
       - name: Login to GHCR
