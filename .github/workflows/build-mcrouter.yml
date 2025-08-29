@@ -92,7 +92,7 @@ jobs:
           output-file: sbom.json
           upload-artifact: false
       - name: Generate SBOM attestation
-        uses: actions/attest-sbom@v2
+        uses: actions/attest-sbom@v3
         with:
           subject-name: ghcr.io/mszabo-wikia/mcrouter-debian-bookworm
           subject-digest: ${{ steps.push.outputs.digest }}
