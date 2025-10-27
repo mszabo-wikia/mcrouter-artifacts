@@ -32,7 +32,7 @@ jobs:
           docker build -f ./infra/Dockerfile-debian --target builder -t buildenv .
           docker run --rm --name buildenv -v $(pwd):/build -w /build buildenv ./infra/build-and-test.sh
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: mcrouter-debian-bookworm
           path: fbcode-scratch/build/mcrouter/mcrouter.deb
